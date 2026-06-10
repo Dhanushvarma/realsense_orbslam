@@ -1,4 +1,4 @@
-# call_m RealSense Stereo SLAM
+# RealSense Stereo SLAM
 
 Camera-pose tracking on an Intel RealSense D435 using ORB-SLAM3 (stereo, via the
 infrared pair), with a live [viser](https://viser.studio) web visualization that
