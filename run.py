@@ -50,8 +50,10 @@ def main():
                 Twc = np.linalg.inv(np.asarray(slam.get_current_pose()))
                 pos, _, rpy = pose_components(Twc)
                 viz.update(Twc, image=left)
-                print(f"pos[{pos[0]:+.3f} {pos[1]:+.3f} {pos[2]:+.3f}]  "
-                      f"rpy[{rpy[0]:+6.1f} {rpy[1]:+6.1f} {rpy[2]:+6.1f}]")
+                print(
+                    f"pos[{pos[0]:+.3f} {pos[1]:+.3f} {pos[2]:+.3f}]  "
+                    f"rpy[{rpy[0]:+6.1f} {rpy[1]:+6.1f} {rpy[2]:+6.1f}]"
+                )
             else:
                 print("tracking:", slam.get_tracking_state())
     except KeyboardInterrupt:

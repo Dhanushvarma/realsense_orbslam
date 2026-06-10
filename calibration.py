@@ -60,13 +60,12 @@ Viewer.ViewpointF: 500.0
 
 
 def _read_calibration(cfg):
-    """Read IR intrinsics + baseline WITHOUT starting a pipeline.
+    """Read IR intrinsics + baseline without starting a pipeline.
 
-    Important: all of get_intrinsics()/get_extrinsics_to() are called here, while
-    the device + sensor + profiles are still in scope. pyrealsense2 profiles do NOT
-    keep their parent device alive, so returning the profile objects and reading
-    them later operates on freed C++ objects (-> "pure virtual method called").
-    rs.intrinsics / rs.extrinsics are value structs, so those *are* safe to return.
+    Every read happens here, while device/sensor/profiles are still in scope:
+    pyrealsense2 profiles don't keep their parent device alive, so reading a
+    returned profile later hits freed C++ objects (-> "pure virtual method
+    called"). The rs.intrinsics / rs.extrinsics value structs are safe to return.
     """
     dev = wait_for_device()
     sensor = dev.first_depth_sensor()  # Stereo Module exposes the IR profiles

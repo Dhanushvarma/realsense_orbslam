@@ -3,11 +3,9 @@ import time
 import numpy as np
 import pyrealsense2 as rs
 
-# A single shared context for the whole process. Creating and destroying multiple
-# rs.context() objects in overlapping lifetimes is a known cause of
-# "pure virtual method called" crashes at garbage-collection time, so we keep
-# exactly one context alive and route everything (queries, reset, pipeline)
-# through it.
+# One shared context for the whole process. Multiple overlapping rs.context()
+# objects trigger "pure virtual method called" crashes at GC time, so every
+# query, reset, and pipeline routes through this single one.
 CTX = rs.context()
 
 
@@ -40,8 +38,8 @@ def reset_device(settle=5.0):
         raise RuntimeError("No RealSense device connected")
     print("hardware reset...")
     devs[0].hardware_reset()
-    time.sleep(settle)        # device drops off the bus and starts re-enumerating
-    wait_for_device()         # ...block until it's back and its profiles are ready
+    time.sleep(settle)  # device drops off the bus and starts re-enumerating
+    wait_for_device()  # ...block until it's back and its profiles are ready
     print("device ready")
 
 
@@ -55,8 +53,12 @@ class RealSenseStereo:
     def _config(self):
         rscfg = rs.config()
         c = self.cfg
-        rscfg.enable_stream(rs.stream.infrared, 1, c.width, c.height, rs.format.y8, c.fps)
-        rscfg.enable_stream(rs.stream.infrared, 2, c.width, c.height, rs.format.y8, c.fps)
+        rscfg.enable_stream(
+            rs.stream.infrared, 1, c.width, c.height, rs.format.y8, c.fps
+        )
+        rscfg.enable_stream(
+            rs.stream.infrared, 2, c.width, c.height, rs.format.y8, c.fps
+        )
         return rscfg
 
     def start(self):
@@ -69,11 +71,10 @@ class RealSenseStereo:
         for _ in range(self.cfg.warmup_frames):
             self.pipeline.wait_for_frames()
 
-    def read(self, timeout_ms=None):
+    def read(self):
         """Return (left, right, timestamp_seconds), or None on timeout / missing frame."""
-        timeout_ms = timeout_ms or self.cfg.frame_timeout_ms
         try:
-            frames = self.pipeline.wait_for_frames(timeout_ms)
+            frames = self.pipeline.wait_for_frames(self.cfg.frame_timeout_ms)
         except RuntimeError:
             return None
         left, right = frames.get_infrared_frame(1), frames.get_infrared_frame(2)
