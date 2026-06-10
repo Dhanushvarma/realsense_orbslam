@@ -9,6 +9,7 @@
     "--device-cgroup-rule=c 189:* rmw"
 ],
     "forwardPorts": [8080],
+    "appPort": [8080],
     "postCreateCommand": "uv pip install -e ./orbslam3-python",
     "customizations": {
         "vscode": {
