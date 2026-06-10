@@ -1,5 +1,7 @@
 import pyrealsense2 as rs
 
+from camera import wait_for_device
+
 
 def _write_yaml(path, cfg, K1, K2, baseline):
     with open(path, "w") as f:
@@ -57,25 +59,46 @@ Viewer.ViewpointF: 500.0
 """)
 
 
-def export_settings(cfg):
-    """Briefly open the camera to read IR intrinsics + baseline, write the YAML,
-    then fully release the device. Releasing here is what prevents the frame
-    timeout that otherwise happens while the (slow) vocabulary loads.
+def _read_calibration(cfg):
+    """Read IR intrinsics + baseline WITHOUT starting a pipeline.
 
-    Returns the left-camera fx, used later to set the viser frustum FoV.
+    Important: all of get_intrinsics()/get_extrinsics_to() are called here, while
+    the device + sensor + profiles are still in scope. pyrealsense2 profiles do NOT
+    keep their parent device alive, so returning the profile objects and reading
+    them later operates on freed C++ objects (-> "pure virtual method called").
+    rs.intrinsics / rs.extrinsics are value structs, so those *are* safe to return.
     """
-    pipeline = rs.pipeline()
-    rscfg = rs.config()
-    rscfg.enable_stream(rs.stream.infrared, 1, cfg.width, cfg.height, rs.format.y8, cfg.fps)
-    rscfg.enable_stream(rs.stream.infrared, 2, cfg.width, cfg.height, rs.format.y8, cfg.fps)
+    dev = wait_for_device()
+    sensor = dev.first_depth_sensor()  # Stereo Module exposes the IR profiles
 
-    profile = pipeline.start(rscfg)
-    ir1 = profile.get_stream(rs.stream.infrared, 1).as_video_stream_profile()
-    ir2 = profile.get_stream(rs.stream.infrared, 2).as_video_stream_profile()
-    K1, K2 = ir1.get_intrinsics(), ir2.get_intrinsics()
+    ir1 = ir2 = None
+    for p in sensor.get_stream_profiles():
+        if p.stream_type() != rs.stream.infrared or not p.is_video_stream_profile():
+            continue
+        v = p.as_video_stream_profile()
+        if (v.width(), v.height(), v.fps()) != (cfg.width, cfg.height, cfg.fps):
+            continue
+        if p.stream_index() == 1:
+            ir1 = v
+        elif p.stream_index() == 2:
+            ir2 = v
+
+    if ir1 is None or ir2 is None:
+        raise RuntimeError(
+            f"No IR profile for {cfg.width}x{cfg.height}@{cfg.fps}. "
+            "Run `rs-enumerate-devices` to list supported modes."
+        )
+
+    # Read everything now, while dev/sensor/ir1/ir2 are alive.
+    K1 = ir1.get_intrinsics()
+    K2 = ir2.get_intrinsics()
     baseline = abs(ir1.get_extrinsics_to(ir2).translation[0])  # meters
-    pipeline.stop()
+    return K1, K2, float(baseline)
 
+
+def export_settings(cfg):
+    """Read calibration, write the stereo YAML, return left-camera fx for the FoV."""
+    K1, K2, baseline = _read_calibration(cfg)
     _write_yaml(cfg.settings, cfg, K1, K2, baseline)
     print(f"settings: fx={K1.fx:.1f} cx={K1.ppx:.1f} baseline={baseline * 1000:.1f}mm")
     return K1.fx
