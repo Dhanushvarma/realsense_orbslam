@@ -2,9 +2,12 @@
     "name": "ORB-SLAM3 Ubuntu 22.04",
     "build": { "dockerfile": "Dockerfile" },
     "runArgs": [
-        "--privileged",
-        "-v", "/dev/bus/usb:/dev/bus/usb"
-    ],
+    "--privileged",
+    "-v", "/dev/bus/usb:/dev/bus/usb",
+    "-v", "/dev:/dev",
+    "--device-cgroup-rule=c 81:* rmw",
+    "--device-cgroup-rule=c 189:* rmw"
+],
     "forwardPorts": [8080],
     "postCreateCommand": "uv pip install -e ./orbslam3-python",
     "customizations": {
