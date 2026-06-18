@@ -8,5 +8,8 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = ["pyrealsense2", "numpy", "scipy", "viser"]
 
+[project.scripts]
+realsense-slam = "realsense_orbslam.run:main"
+
 [tool.setuptools]
-py-modules = ["calibration", "camera", "config", "localizer", "pose", "run", "visualizer"]
+packages = ["realsense_orbslam"]
