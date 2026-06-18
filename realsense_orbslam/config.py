@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class Config:
     vocab: str = (
-        "orbslam3-python/ORB_SLAM3/Vocabulary/ORBvoc.txt"  # path to ORB-SLAM3 vocabulary file
+        "/workspaces/realsense_orbslam/third_party/orbslam3-python/ORB_SLAM3/Vocabulary/ORBvoc.txt"  # path to ORB-SLAM3 vocabulary file
     )
     settings: str = "d435_stereo.yaml"  # generated stereo settings file
     width: int = 640
