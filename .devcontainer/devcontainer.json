@@ -10,7 +10,7 @@
 ],
     "forwardPorts": [8080],
     "appPort": [8080],
-    "postCreateCommand": "uv pip install -e ./orbslam3-python",
+    "postCreateCommand": "uv pip install -e ./third_party/orbslam3-python",
     "customizations": {
         "vscode": {
             "extensions": [

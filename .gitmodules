@@ -1,0 +1,3 @@
+[submodule "third_party/orbslam3-python"]
+	path = third_party/orbslam3-python
+	url = git@github.com:Dhanushvarma/orbslam3-python.git
